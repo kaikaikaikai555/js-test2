@@ -2,49 +2,62 @@ $(document).ready(function() {
 let saveValue = ""; // 1つ目の数字を覚える
 let operator = "";  // 記号（＋やー）を覚える
 let isReset = false; // 演算子で画面をリセットフラグ
+let hasDot = false; // ドットのロック用フラグ
+let hasOperator = false; // 直前が演算子なら true
     // ここに処理を書いていく
     $(".num").click(function() {
         let nowValue = $("#result").text(); // 今の表示を取得
         let clickedValue = $(this).text();  // 押された数字を取得
 
-    if (nowValue === "0") {
+    if (nowValue === "0" || isReset) {
         // 新しい数字で上書き
         $("#result").text(clickedValue);
+        isReset = false; // リセットフラグを戻す
     } else {
         // 今の数字に新しい数字を追加
         $("#result").text(nowValue + clickedValue);
     }
+    hasOperator = false;
     });
+
     $(".op").click(function() {
-        // 画面に出ている数字を記憶
-        saveValue = $("#result").text();
+        let op = $(this).text();
+        let nowValue = $("#result").text();
 
-        // 演算子を記憶
-        operator = $(this).text();
+        // 演算子の連続入力を防ぐ（ただし最初の - はOK）
+        if (hasOperator) return;
 
-    });
-        // 演算子を押した時に画面をリセットする処理
-        // ＋を押した時
-    $(".op").click(function() {
-        // 省略：数字の保存など
-        isReset = true; // リセットフラグ
-    });
+        // 負の数スタート
+         if (nowValue === "0" && op === "-") {
+        $("#result").text("-");
+        hasOperator = true;
+         return;
+        }
+        hasDot = false; // ドットのロックを解除
+        saveValue = nowValue;
+        operator = op;
 
-        // numを押した時
-    $(".num").click(function() {
-        if (isReset === true) {
-        // 画面を上書き
-    $("#result").text($(this).text());
-        // リセットを下ろす
+        $("#result").text(saveValue + operator);
+
         isReset = false;
-    } else {
-        // 演算子がなければ何もしない
-    }
+        hasOperator = true;
+
+
     });
+
+        // ドット専用の処理
+    $("#dot").click(function() {
+    if (hasDot) return; // ロックされてたら何もしない
+
+    $("#result").append("."); 
+    hasDot = true; // ロック
+    });
+    
+    
     // ＝を押した時
     $("#equals").click(function() {
         let num1 = Number(saveValue);
-        let num2 = Number($("#result").text());
+        let num2 = Number($("#result").text().replace(saveValue + operator, ""));
         let result = 0;
 
         if (operator === "+") {
@@ -58,6 +71,8 @@ let isReset = false; // 演算子で画面をリセットフラグ
         }
         // 計算結果を表示
         $("#result").text(result);
+        isReset = true;
+        hasOperator = false;
     });
 
     //ACを押した時
@@ -70,5 +85,7 @@ let isReset = false; // 演算子で画面をリセットフラグ
         operator = "";
         // isReset を false に戻す
         isReset = false;
+        hasDot = false;
+        hasOperator = false;
     });
 });
